@@ -11,9 +11,9 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 # Values that used for test only
 script_path = Path(__file__).resolve().parent
 
-DATA_DIR = f'{script_path}/../data'
+DATA_DIR = f'{script_path}/../'
 DATASET_NAME = "kaggle_contest_test"
-DATA_CSV = os.path.join(DATA_DIR, "kaggle_dataset/test.csv",)
+DATA_CSV = os.path.join(DATA_DIR, "datasets/test.csv",)
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
