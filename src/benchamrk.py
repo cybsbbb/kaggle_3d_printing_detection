@@ -51,14 +51,20 @@ def benchmark_file(filename):
     dataframe_res = pd.read_csv(f'{script_path}/../datasets/{filename}.csv')
     dataframe_groundtruth = pd.read_csv(f'{script_path}/../datasets/groundtruth.csv')
 
+    res = list(dataframe_res['has_under_extrusion'])[:]
+    groundtruth = list(dataframe_groundtruth['has_under_extrusion'])[:]
+
     res_public = list(dataframe_res['has_under_extrusion'])[9679:]
-    groundthuth_public = list(dataframe_groundtruth['has_under_extrusion'])[9679:]
+    groundtruth_public = list(dataframe_groundtruth['has_under_extrusion'])[9679:]
 
     res_private = list(dataframe_res['has_under_extrusion'])[:9679]
-    groundthuth_private = list(dataframe_groundtruth['has_under_extrusion'])[:9679]
+    groundtruth_private = list(dataframe_groundtruth['has_under_extrusion'])[:9679]
 
-    f1_public = f1_score(res_public, groundthuth_public, average='macro')
-    f1_private = f1_score(res_private, groundthuth_private, average='macro')
+    f1 = f1_score(res, groundtruth, average='macro')
+    f1_public = f1_score(res_public, groundtruth_public, average='macro')
+    f1_private = f1_score(res_private, groundtruth_private, average='macro')
+
+    print(f"F1 Score: {f1}")
     print(f"Public F1 Score: {f1_public}")
     print(f"Private F1 Score: {f1_private}")
 
@@ -67,4 +73,4 @@ def benchmark_file(filename):
 
 if __name__ == '__main__':
     generate_groundtruth()
-    benchmark_file('sample_submission')
+    benchmark_file('submission_0.1')
