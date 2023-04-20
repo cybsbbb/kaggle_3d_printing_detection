@@ -37,7 +37,7 @@ class ParametersDataModule(pl.LightningDataModule):
         # Define the post transform
         self.post_crop_transform = transforms.Compose(
             [
-                transforms.RandomResizedCrop(224, scale=(0.9, 1.0)),
+                transforms.RandomResizedCrop(224, scale=(0.5, 1.0)),
                 transforms.RandomHorizontalFlip(),
                 transforms.ColorJitter(
                     brightness=0.5, contrast=0.5, hue=0.5, saturation=0.5

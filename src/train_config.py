@@ -9,15 +9,15 @@ from pytorch_lightning import seed_everything
 DATE = datetime.now().strftime("%d%m%Y")
 
 script_path = Path(__file__).resolve().parent
-DATA_DIR = f'{script_path}/../data'
+DATA_DIR = f'{script_path}/../'
 
 DATASET_NAME = "kaggle_contest_train"
-DATA_CSV = os.path.join(DATA_DIR, "kaggle_dataset/train.csv",)
+DATA_CSV = os.path.join(DATA_DIR, "datasets/train.csv",)
 
-INITIAL_LR = 0.0005
+INITIAL_LR = 0.001
 
-BATCH_SIZE = 128
-MAX_EPOCHS = 500
+BATCH_SIZE = 256
+MAX_EPOCHS = 20
 
 NUM_NODES = 1
 NUM_GPUS = 1

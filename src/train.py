@@ -13,7 +13,7 @@ parser = argparse.ArgumentParser()
 script_path = Path(__file__).resolve().parent
 
 parser.add_argument(
-    "-s", "--seed", default=1234, type=int, help="Set seed for training"
+    "-s", "--seed", default=3407, type=int, help="Set seed for training"
 )
 parser.add_argument(
     "-e",
@@ -38,7 +38,7 @@ checkpoint_callback = ModelCheckpoint(
     dirpath=f"{script_path}/../checkpoints/{DATE}/{seed}/",
     filename="MHResAttNet-{}-{}-".format(DATASET_NAME, DATE)
     + "{epoch:02d}-{val_loss:.2f}-{val_acc:.2f}",
-    save_top_k=3,
+    save_top_k=20,
     mode="min",
 )
 

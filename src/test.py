@@ -1,63 +1,84 @@
 import argparse
+import pandas as pd
 import collections
 import pytorch_lightning as pl
 from data.data_module import ParametersDataModule
 from model.network_module import ParametersClassifier
 from train_config import *
-from benchamrk import benchmark_file
+from benchamark import benchmark_file
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 # Values that used for test only
 script_path = Path(__file__).resolve().parent
-
 DATA_DIR = f'{script_path}/../'
 DATASET_NAME = "kaggle_contest_test"
 DATA_CSV = os.path.join(DATA_DIR, "datasets/test.csv",)
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
-    "-s", "--seed", default=1234, type=int, help="Set seed for training"
+    "-s", "--seed", default=3407, type=int, help="Set seed for training"
 )
 args = parser.parse_args()
 seed = args.seed
 set_seed(seed)
 
-CHECKPOINT_PATH = f'../checkpoints/MHResAttNet-kaggle_contest_train-15042023-epoch=349-val_loss=0.00-val_acc=1.00.ckpt'
 
-model = ParametersClassifier.load_from_checkpoint(
-    checkpoint_path=CHECKPOINT_PATH,
-    num_classes=2,
-    lr=INITIAL_LR,
-    gpus=1,
-    transfer=False,
-)
-model.eval()
-model.to(device)
+for epoch in range(11, 12):
+    CHECKPOINT_PATH = f'../checkpoints/MHResAttNet-kaggle_contest_train-19042023-epoch={epoch:02d}.ckpt'
+    print(f"testing checkpoint: {CHECKPOINT_PATH}")
 
-data = ParametersDataModule(
-    batch_size=64,
-    data_dir=DATA_DIR,
-    csv_file=DATA_CSV,
-    dataset_name=DATASET_NAME,
-    has_under_extrusion=False,
-)
-data.setup('test')
+    # Load Model from checkpoint
+    model = ParametersClassifier.load_from_checkpoint(
+        checkpoint_path=CHECKPOINT_PATH,
+        num_classes=2,
+        lr=INITIAL_LR,
+        gpus=1,
+        transfer=False,
+    )
+    model.eval()
+    model.to(device)
 
-dataframe_res = data.dataset.dataframe
+    # Run on test dataset 20 times for voting
+    model_pred_results = []
+    for i in range(20):
+        print(f"Voting Round: {i}")
+        data = ParametersDataModule(
+            batch_size=64,
+            data_dir=DATA_DIR,
+            csv_file=DATA_CSV,
+            dataset_name=DATASET_NAME,
+            has_under_extrusion=False,
+        )
+        data.setup('test')
+        preds = []
+        for batch_idx, (X, y) in enumerate(data.test_dataloader()):
+            print(batch_idx)
+            X = X.to(device)
+            _, batch_pred = torch.max(model(X), 1)
+            preds.append(batch_pred.cpu())
+        model_pred = list(torch.cat(preds).numpy())
+        model_pred_results.append(model_pred)
 
-preds = []
-for batch_idx, (X, y) in enumerate(data.test_dataloader()):
-    print(batch_idx)
-    X = X.to(device)
-    _, batch_pred = torch.max(model(X), 1)
-    preds.append(batch_pred.cpu())
-model_pred = list(torch.cat(preds).numpy())
+    # Get the final voting results
+    model_pred_results_np = np.array(model_pred_results)
+    model_pred_votes = model_pred_results_np.sum(axis=0)
+    model_pred_votes = list(model_pred_votes)
 
-img_paths = list(dataframe_res['img_path'])
-printer_ids = list(dataframe_res['printer_id'])
-print_id = list(dataframe_res['print_id'])
-num_files = len(img_paths)
+    # dataframe_res = pd.read_csv(f'{script_path}/../datasets/test.csv')
+    # dataframe_res['has_under_extrusion'] = model_pred_votes
+    # dataframe_res = dataframe_res.drop(['printer_id', 'print_id'], axis=1)
+    # dataframe_res.to_csv(f'{script_path}/../datasets/result_votes_{epoch}.csv', index=False)
+
+    torch.cuda.empty_cache()
+
+
+
+# dataframe_res = pd.read_csv(f'{script_path}/../datasets/test.csv')
+# img_paths = list(dataframe_res['img_path'])
+# printer_ids = list(dataframe_res['printer_id'])
+# print_id = list(dataframe_res['print_id'])
+# num_files = len(img_paths)
 
 # counter_total = collections.defaultdict(int)
 # counter_true = collections.defaultdict(int)
@@ -84,10 +105,3 @@ num_files = len(img_paths)
 #         final_pred.append(1)
 #     else:
 #         final_pred.append(0)
-
-dataframe_res['has_under_extrusion'] = model_pred
-
-dataframe_res = dataframe_res.drop(['printer_id', 'print_id'], axis=1)
-dataframe_res.to_csv(f'{script_path}/../datasets/result.csv', index=False)
-
-benchmark_file('result')
