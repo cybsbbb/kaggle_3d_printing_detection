@@ -24,6 +24,7 @@ seed = args.seed
 set_seed(seed)
 
 
+# Run the voting prediction
 for epoch in range(11, 12):
     CHECKPOINT_PATH = f'../checkpoints/MHResAttNet-kaggle_contest_train-19042023-epoch={epoch:02d}.ckpt'
     print(f"testing checkpoint: {CHECKPOINT_PATH}")
@@ -65,15 +66,45 @@ for epoch in range(11, 12):
     model_pred_votes = model_pred_results_np.sum(axis=0)
     model_pred_votes = list(model_pred_votes)
 
-    # dataframe_res = pd.read_csv(f'{script_path}/../datasets/test.csv')
-    # dataframe_res['has_under_extrusion'] = model_pred_votes
-    # dataframe_res = dataframe_res.drop(['printer_id', 'print_id'], axis=1)
-    # dataframe_res.to_csv(f'{script_path}/../datasets/result_votes_{epoch}.csv', index=False)
-
+    dataframe_res = pd.read_csv(f'{script_path}/../datasets/test.csv')
+    dataframe_res['has_under_extrusion'] = model_pred_votes
+    dataframe_res = dataframe_res.drop(['printer_id', 'print_id'], axis=1)
+    dataframe_res.to_csv(f'{script_path}/../datasets/result_votes_{epoch}.csv', index=False)
     torch.cuda.empty_cache()
 
 
+# Get the final results
+epoch = 11
+threshold = 10
+dataframe_vote = pd.read_csv(f'{script_path}/../datasets/result_votes_{epoch}.csv')
+votes = list(dataframe_vote['has_under_extrusion'])[:]
+num_files = len(votes)
+final_pred = []
+for i in range(num_files):
+    if votes[i] >= threshold:
+        final_pred.append(1)
+    else:
+        final_pred.append(0)
+dataframe_vote['has_under_extrusion'] = final_pred
+dataframe_vote.to_csv(f'{script_path}/../datasets/submission1.csv', index=False)
 
+
+epoch = 11
+threshold = 13
+dataframe_vote = pd.read_csv(f'{script_path}/../datasets/result_votes_{epoch}.csv')
+votes = list(dataframe_vote['has_under_extrusion'])[:]
+num_files = len(votes)
+final_pred = []
+for i in range(num_files):
+    if votes[i] >= threshold:
+        final_pred.append(1)
+    else:
+        final_pred.append(0)
+dataframe_vote['has_under_extrusion'] = final_pred
+dataframe_vote.to_csv(f'{script_path}/../datasets/submission2.csv', index=False)
+
+
+# Old code that use the print id
 # dataframe_res = pd.read_csv(f'{script_path}/../datasets/test.csv')
 # img_paths = list(dataframe_res['img_path'])
 # printer_ids = list(dataframe_res['printer_id'])
@@ -101,7 +132,7 @@ for epoch in range(11, 12):
 # # Set the same label for the same exp
 # for idx in range(num_files):
 #     exp_id = f'{printer_ids[idx]}-{print_id[idx]}'
-#     if counter_true[exp_id]/counter_total[exp_id] > 0.9:
+#     if counter_true[exp_id]/counter_total[exp_id] > 0.1:
 #         final_pred.append(1)
 #     else:
 #         final_pred.append(0)
