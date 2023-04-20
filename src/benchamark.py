@@ -73,4 +73,4 @@ def benchmark_file(filename):
 
 if __name__ == '__main__':
     generate_groundtruth()
-    benchmark_file('submission_0.1')
+    benchmark_file('submission1')
